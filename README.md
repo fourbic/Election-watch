@@ -1,8 +1,5 @@
-# Dexter
-election monotoring
-
-## About
-Dexter leverages advanced natural language processing and AI/ML models to detect, analyze, and surface election-related misinformation across multiple channels.
+# EW
+election watch
 
 ## Features
 - Multi-language support for various languages
