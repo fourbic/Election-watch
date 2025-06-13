@@ -2,10 +2,10 @@
 election watch
 
 ## Features
-- Multi-language support for various languages
-- AI for content analysis
-- Interactive visualization dashboard
-- Customizable report generation
+- Multi-language support
+- Content analysis
+- Visualization dashboard
+- Customizable reports
 
 ## Installation
 
@@ -58,7 +58,7 @@ Respect contributors and maintain a collaborative environment.
 
  MIT License
 
-Copyright (c) 2025 Fourbic
+Copyright (c) 2025 EW
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files, to deal in the Software
