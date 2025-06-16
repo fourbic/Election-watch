@@ -1,7 +1,7 @@
-import React from 'react';
+import { FC } from 'react';
 import { Link } from 'react-router-dom';
 
-const LandingPage = () => {
+const LandingPage: FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       <div className="container mx-auto px-4 py-16">
@@ -98,14 +98,10 @@ const LandingPage = () => {
         {/* Footer */}
         <footer className="mt-24 py-8 border-t border-gray-200">
           <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="mb-4 md:mb-0">
-              <div className="text-xl font-bold text-blue-800 mb-2">dexter</div>
-              <p className="text-gray-500">© {new Date().getFullYear()} Dexter. All rights reserved.</p>
-            </div>
+            <p className="text-gray-600">&copy; 2025 Dexter. All rights reserved.</p>
             <div className="flex gap-6">
-              <Link to="/login" className="text-gray-600 hover:text-blue-600">Sign In</Link>
-              <a href="#features" className="text-gray-600 hover:text-blue-600">Features</a>
-              <a href="#" className="text-gray-600 hover:text-blue-600">About</a>
+              <a href="#" className="text-gray-600 hover:text-blue-600">Privacy Policy</a>
+              <a href="#" className="text-gray-600 hover:text-blue-600">Terms of Service</a>
               <a href="#" className="text-gray-600 hover:text-blue-600">Contact</a>
             </div>
           </div>

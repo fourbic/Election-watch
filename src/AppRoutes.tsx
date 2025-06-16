@@ -1,4 +1,4 @@
-import React from 'react';
+import { FC, PropsWithChildren } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 
@@ -14,7 +14,7 @@ import ReportsPage from './pages/ReportsPage';
 import SettingsPage from './pages/SettingsPage';
 
 // Protected route component
-const ProtectedRoute = ({ children }) => {
+const ProtectedRoute: FC<PropsWithChildren> = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
   
   if (loading) {
@@ -25,7 +25,7 @@ const ProtectedRoute = ({ children }) => {
     );
   }
   
-  if (!isAuthenticated()) {
+  if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
   
@@ -33,7 +33,7 @@ const ProtectedRoute = ({ children }) => {
 };
 
 // Main routes component
-const AppRoutes = () => {
+const AppRoutes: FC = () => {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />

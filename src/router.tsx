@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { createBrowserRouter, Navigate, RouteObject } from 'react-router-dom';
 import Layout from './components/layouts/Layout';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
@@ -9,10 +9,11 @@ import AlertsPage from './pages/AlertsPage';
 import ReportsPage from './pages/ReportsPage';
 import SettingsPage from './pages/SettingsPage';
 import { useAuth } from './context/AuthContext';
+import { FC, PropsWithChildren } from 'react';
 
 // Protected route wrapper component
-const ProtectedRoute = ({ children }) => {
-  const { user, isAuthenticated } = useAuth();
+const ProtectedRoute: FC<PropsWithChildren> = ({ children }) => {
+  const { isAuthenticated } = useAuth();
   
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
@@ -73,6 +74,6 @@ const router = createBrowserRouter([
     path: '*',
     element: <Navigate to="/" replace />,
   },
-]);
+] satisfies RouteObject[]);
 
 export default router;
