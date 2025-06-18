@@ -1,209 +1,313 @@
-import React, { useRef, useEffect } from 'react';
-import { Network, DataSet } from 'vis-network/standalone';
-//import { useTheme } from './ThemeContext'; // Assuming you have a ThemeContext for dark/light mode
+import React, { useState, useRef, useEffect } from 'react';
 
-// Define types for nodes and edges
-interface MyNode {
+interface Node {
   id: string;
   label: string;
-  group: 'source' | 'narrative' | 'finding';
-  color?: {
-    background: string;
-    border: string;
-    highlight: {
-      background: string;
-      border: string;
-    };
-  };
-  font?: {
-    color: string;
-  };
+  x: number;
+  y: number;
+  color: string;
+  category: 'source' | 'narrative' | 'findings';
+  radius: number;
 }
 
-interface MyEdge {
+interface Edge {
   from: string;
   to: string;
-  arrows?: 'to' | 'from' | 'to,from' | undefined;
-  color?: {
-    color: string;
-    highlight: string;
-  };
 }
 
-const NetworkGraph: React.FC = () => {
-  const visJsContainer = useRef<HTMLDivElement>(null);
-  const networkInstance = useRef<Network | null>(null); // To store the network instance
-  //const { theme } = useTheme(); // For dynamic theme colors
-const theme="dark"
-  // Define colors based on the IMAGE'S BACKGROUND COLORS of the circles
-  const nodeColors = {
-    source: { // Dark Green/Teal from image
-      background: '#0F6B6B', // A dark teal/forest green
-      border: '#0A4D4D',    // A darker border
-      highlight: { background: '#148C8C', border: '#0F6B6B' }, // Slightly lighter for highlight
-    },
-    narrative: { // Muted Gold/Dark Yellow from image
-      background: '#A6822E', // A muted gold/dark yellow
-      border: '#7A6022',    // A darker border
-      highlight: { background: '#D4A83B', border: '#A6822E' }, // Slightly lighter for highlight
-    },
-    finding: { // Dark Blue from image
-      background: '#2B5791', // A deep, dark blue
-      // The border in the image looks almost the same as background, or slightly darker.
-      border: '#1E3E67',    // A darker border
-      highlight: { background: '#3D72BD', border: '#2B5791' }, // Slightly lighter for highlight
-    },
+const NetworkGraph = () => {
+  const svgRef = useRef<SVGSVGElement>(null);
+  const [draggedNode, setDraggedNode] = useState<string | null>(null);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [hoveredNode, setHoveredNode] = useState<string | null>(null);
+  const [selectedNode, setSelectedNode] = useState<string | null>(null);
+
+  const [nodes, setNodes] = useState<Node[]>([
+    // Source nodes (green)
+    { id: 'voter-registration', label: 'Voter Registration Campaign', x: 150, y: 100, color: '#059669', category: 'source', radius: 50 },
+    { id: 'source', label: 'Source', x: 150, y: 200, color: '#059669', category: 'source', radius: 40 },
+    { id: 'voter-rights', label: 'Voter Rights Campaign', x: 150, y: 300, color: '#059669', category: 'source', radius: 50 },
+    
+    // Narrative nodes (yellow/orange)
+    { id: 'narrative', label: 'Narrative', x: 350, y: 120, color: '#F59E0B', category: 'narrative', radius: 45 },
+    { id: 'bias-in-media', label: 'Bias in Media Coverage', x: 350, y: 200, color: '#F59E0B', category: 'narrative', radius: 55 },
+    { id: 'election-allegations', label: 'Election Allegations', x: 350, y: 280, color: '#F59E0B', category: 'narrative', radius: 50 },
+    
+    // Findings nodes (blue)
+    { id: 'disinformation', label: 'Disinformation Claims', x: 550, y: 80, color: '#2563EB', category: 'findings', radius: 50 },
+    { id: 'findings-strength', label: 'Findings Strength', x: 550, y: 160, color: '#2563EB', category: 'findings', radius: 45 },
+    { id: 'election-information', label: 'Election Information', x: 550, y: 240, color: '#2563EB', category: 'findings', radius: 50 }
+  ]);
+
+  const edges: Edge[] = [
+    { from: 'voter-registration', to: 'narrative' },
+    { from: 'source', to: 'narrative' },
+    { from: 'source', to: 'bias-in-media' },
+    { from: 'voter-rights', to: 'bias-in-media' },
+    { from: 'voter-rights', to: 'election-allegations' },
+    { from: 'narrative', to: 'disinformation' },
+    { from: 'narrative', to: 'findings-strength' },
+    { from: 'bias-in-media', to: 'findings-strength' },
+    { from: 'bias-in-media', to: 'election-information' },
+    { from: 'election-allegations', to: 'election-information' }
+  ];
+
+  const handleMouseDown = (e: React.MouseEvent, nodeId: string) => {
+    const rect = svgRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    
+    const node = nodes.find(n => n.id === nodeId);
+    if (!node) return;
+
+    setDraggedNode(nodeId);
+    setDragOffset({
+      x: e.clientX - rect.left - node.x,
+      y: e.clientY - rect.top - node.y
+    });
+    setSelectedNode(nodeId);
   };
 
-  // Adjust edge and text color for contrast on the dark background
-  const edgeColor = theme === 'dark' ? '#94A3B8' : '#64748B'; // slate-400 / slate-600
-  const nodeFontColor = theme === 'dark' ? '#E2E8F0' : '#475569'; // slate-200 / slate-600 (lighter text for dark nodes)
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!draggedNode || !svgRef.current) return;
 
+    const rect = svgRef.current.getBoundingClientRect();
+    const newX = e.clientX - rect.left - dragOffset.x;
+    const newY = e.clientY - rect.top - dragOffset.y;
 
-  // --- Data ---
-  // Ensure nodes and edges are outside useEffect or memoized if they don't change often
-  // Re-instantiating DataSet is okay if the raw data changes, but if just options,
-  // we might update via setOptions on the network instance.
-  // For this static graph, define them once.
-  const initialNodes = new DataSet<MyNode>([
-    { id: 'source-voter-rights-campaign', label: 'Voter Rights\nCampaign', group: 'source' },
-    { id: 'source-narrative-2', label: 'Source', group: 'source' },
-    { id: 'source-narrative-3', label: 'Voter Rights\nCampaign', group: 'source' },
-    { id: 'source-other', label: 'Source', group: 'source' },
-    { id: 'narrative-general', label: 'Narrative', group: 'narrative' },
-    { id: 'narrative-in-media-reporting', label: 'In Media\nReporting', group: 'narrative' },
-    { id: 'narrative-other', label: 'Narrative', group: 'narrative' },
-    { id: 'finding-debunked-claims', label: 'Debunked\nClaims', group: 'finding' },
-    { id: 'finding-election-fraud', label: 'Election Fraud\n& Irregularities', group: 'finding' },
-    { id: 'finding-general', label: 'Findings', group: 'finding' },
-    { id: 'finding-election-narratives', label: 'Election\nNarratives', group: 'finding' },
-  ]);
+    setNodes(prevNodes =>
+      prevNodes.map(node =>
+        node.id === draggedNode
+          ? { ...node, x: Math.max(60, Math.min(640, newX)), y: Math.max(60, Math.min(340, newY)) }
+          : node
+      )
+    );
+  };
 
-  const initialEdges = new DataSet<MyEdge>([
-    { from: 'source-voter-rights-campaign', to: 'narrative-general' },
-    { from: 'narrative-general', to: 'finding-debunked-claims' },
-    { from: 'source-narrative-3', to: 'narrative-in-media-reporting' },
-    { from: 'narrative-in-media-reporting', to: 'finding-election-fraud' },
-    { from: 'narrative-other', to: 'finding-general' },
-    { from: 'narrative-general', to: 'finding-general' },
-    { from: 'source-narrative-2', to: 'narrative-other' },
-    { from: 'source-other', to: 'narrative-other' },
-    { from: 'narrative-in-media-reporting', to: 'finding-election-narratives' },
-    { from: 'narrative-other', to: 'finding-election-narratives' },
-  ]);
+  const handleMouseUp = () => {
+    setDraggedNode(null);
+  };
 
-  // --- Effect Hook for Network Initialization and Updates ---
-  useEffect(() => {
-    if (!visJsContainer.current) return;
+  const getNodeByPosition = (x: number, y: number): Node | null => {
+    return nodes.find(node => {
+      const dx = node.x - x;
+      const dy = node.y - y;
+      return Math.sqrt(dx * dx + dy * dy) <= node.radius;
+    }) || null;
+  };
 
-    // Define options (this will be recreated if dependencies change)
-    const options = {
-      // Completely disable physics for a static graph
-      physics: false,
-      layout: {
-        improvedLayout: true,
-        randomSeed: 2, // Fixed seed for consistent layout
-      },
-      interaction: {
-        dragNodes: false, // Disable node dragging
-        zoomView: false,  // Disable zooming
-        dragView: false,  // Disable panning/dragging the view
-        hover: true,      // Keep hover effects
-        tooltipDelay: 300,
-      },
-      nodes: {
-        shape: 'dot',
-        size: 25,
-        font: {
-          color: nodeFontColor,
-          size: 14,
-          face: 'sans-serif',
-          multi: 'html',
-        },
-        borderWidth: 2,
-        shadow: {
-          enabled: true,
-          color: 'rgba(0,0,0,0.5)',
-          size: 10,
-          x: 5,
-          y: 5,
-        },
-      },
-      edges: {
-        width: 2,
-        smooth: {
-          enabled: true,
-          type: 'continuous',
-        },
-        color: {
-          inherit: 'from',
-          color: edgeColor,
-          highlight: edgeColor,
-        },
-      },
-      // Groups will apply the correct colors and override default node font
-      groups: {
-        source: { ...nodeColors.source, font: { color: nodeFontColor } },
-        narrative: { ...nodeColors.narrative, font: { color: nodeFontColor } },
-        finding: { ...nodeColors.finding, font: { color: nodeFontColor } },
-      },
-      configure: {
-          enabled: false,
+  const resetLayout = () => {
+    setNodes([
+      { id: 'voter-registration', label: 'Voter Registration Campaign', x: 150, y: 100, color: '#059669', category: 'source', radius: 50 },
+      { id: 'source', label: 'Source', x: 150, y: 200, color: '#059669', category: 'source', radius: 40 },
+      { id: 'voter-rights', label: 'Voter Rights Campaign', x: 150, y: 300, color: '#059669', category: 'source', radius: 50 },
+      { id: 'narrative', label: 'Narrative', x: 350, y: 120, color: '#F59E0B', category: 'narrative', radius: 45 },
+      { id: 'bias-in-media', label: 'Bias in Media Coverage', x: 350, y: 200, color: '#F59E0B', category: 'narrative', radius: 55 },
+      { id: 'election-allegations', label: 'Election Allegations', x: 350, y: 280, color: '#F59E0B', category: 'narrative', radius: 50 },
+      { id: 'disinformation', label: 'Disinformation Claims', x: 550, y: 80, color: '#2563EB', category: 'findings', radius: 50 },
+      { id: 'findings-strength', label: 'Findings Strength', x: 550, y: 160, color: '#2563EB', category: 'findings', radius: 45 },
+      { id: 'election-information', label: 'Election Information', x: 550, y: 240, color: '#2563EB', category: 'findings', radius: 50 }
+    ]);
+    setSelectedNode(null);
+  };
+
+  const formatLabel = (label: string, radius: number) => {
+    const maxChars = Math.floor(radius / 3);
+    if (label.length <= maxChars) return [label];
+    
+    const words = label.split(' ');
+    const lines: string[] = [];
+    let currentLine = '';
+    
+    words.forEach(word => {
+      if ((currentLine + ' ' + word).length <= maxChars) {
+        currentLine = currentLine ? currentLine + ' ' + word : word;
+      } else {
+        if (currentLine) lines.push(currentLine);
+        currentLine = word;
       }
-    };
-
-    // Prepare data with dynamic colors
-    const nodesWithColors = new DataSet<MyNode>(
-        initialNodes.map(node => ({
-            ...node,
-            ...(nodeColors[node.group]) // Apply colors based on group
-        }))
-    );
-    const edgesWithColors = new DataSet<MyEdge>(
-        initialEdges.map(edge => ({
-            ...edge,
-            color: { color: edgeColor, highlight: edgeColor } // Apply edge color
-        }))
-    );
-
-    const data = { nodes: nodesWithColors, edges: edgesWithColors };
-
-    // If network instance exists, destroy it to re-create with new options
-    if (networkInstance.current) {
-        networkInstance.current.destroy();
-    }
-
-    // Create a new network instance
-    const network = new Network(visJsContainer.current, data, options);
-    networkInstance.current = network; // Store the instance
-
-    // Adjust position after initial layout if you want it centered/fixed
-    // You might need to experiment with this based on your desired look
-    network.once('afterDrawing', () => {
-        network.fit(); // Fits the graph to the canvas
-        // network.moveTo({ position: { x: 0, y: 0 }, scale: 1 }); // Or a specific position/zoom
     });
-
-
-    // Cleanup function
-    return () => {
-      if (networkInstance.current) {
-        networkInstance.current.destroy();
-        networkInstance.current = null;
-      }
-    };
-  }, [theme, edgeColor, nodeFontColor, nodeColors]); // Dependencies for re-rendering the network
+    
+    if (currentLine) lines.push(currentLine);
+    return lines.slice(0, 3); // Max 3 lines
+  };
 
   return (
-    <div className="w-full h-64 md:h-80 lg:h-96 bg-gray-900 rounded-lg p-4 shadow-lg flex items-center justify-center">
-      <div
-        ref={visJsContainer}
-        className="w-full h-full"
-        style={{
-          border: '1px solid ' + (theme === 'dark' ? '#475569' : '#e2e8f0'),
-          borderRadius: '0.375rem',
-        }}
-      />
+    <div className=" bg-gray-900 p-8 w-full relative h-64 md:h-80 lg:h-96">
+      <div className="max-w-4xl mx-auto ">
+        <div className="bg-gray-800 rounded-2xl p-6 border  overflow-y-hidden border-gray-700 w-full relative -top-8 h-64 md:h-80 lg:h-96">
+          <div className="flexy justify-between items-center mb-6 hidden">
+            <h2 className="text-2xl font-bold text-white">Interactive Network Graph</h2>
+            <button
+              onClick={resetLayout}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200"
+            >
+              Reset Layout
+            </button>
+          </div>
+          
+          <div className="bg-gray-900 rounded-xl p-4 border border-gray-600">
+            <svg
+              ref={svgRef}
+              width="100%"
+              height="200"
+              viewBox="0 0 700 400"
+              className="cursor-grab active:cursor-grabbing"
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
+            >
+              {/* Edges */}
+              <g className="edges">
+                {edges.map((edge, index) => {
+                  const fromNode = nodes.find(n => n.id === edge.from);
+                  const toNode = nodes.find(n => n.id === edge.to);
+                  if (!fromNode || !toNode) return null;
+
+                  const isConnected = selectedNode === edge.from || selectedNode === edge.to;
+                  
+                  return (
+                    <line
+                      key={index}
+                      x1={fromNode.x}
+                      y1={fromNode.y}
+                      x2={toNode.x}
+                      y2={toNode.y}
+                      stroke={isConnected ? '#60A5FA' : '#4B5563'}
+                      strokeWidth={isConnected ? 3 : 2}
+                      opacity={isConnected ? 0.8 : 0.4}
+                      className="transition-all duration-300"
+                    />
+                  );
+                })}
+              </g>
+
+              {/* Nodes */}
+              <g className="nodes">
+                {nodes.map(node => {
+                  const isHovered = hoveredNode === node.id;
+                  const isSelected = selectedNode === node.id;
+                  const isDragging = draggedNode === node.id;
+                  const scale = isHovered || isSelected ? 1.1 : 1;
+                  const lines = formatLabel(node.label, node.radius);
+                  
+                  return (
+                    <g
+                      key={node.id}
+                      transform={`translate(${node.x}, ${node.y}) scale(${scale})`}
+                      className="transition-transform duration-200 cursor-pointer"
+                      onMouseDown={e => handleMouseDown(e, node.id)}
+                      onMouseEnter={() => setHoveredNode(node.id)}
+                      onMouseLeave={() => setHoveredNode(null)}
+                      onClick={() => setSelectedNode(node.id)}
+                    >
+                      {/* Node shadow */}
+                      <circle
+                        cx={2}
+                        cy={2}
+                        r={node.radius}
+                        fill="rgba(0,0,0,0.3)"
+                        opacity={isHovered ? 0.5 : 0.3}
+                      />
+                      
+                      {/* Node background */}
+                      <circle
+                        cx={0}
+                        cy={0}
+                        r={node.radius}
+                        fill={node.color}
+                        stroke={isSelected ? '#FFFFFF' : 'transparent'}
+                        strokeWidth={3}
+                        className="transition-all duration-200"
+                        filter={isHovered ? 'brightness(1.2)' : 'brightness(1)'}
+                      />
+                      
+                      {/* Node gradient overlay */}
+                      <circle
+                        cx={0}
+                        cy={0}
+                        r={node.radius}
+                        fill="url(#nodeGradient)"
+                        opacity={0.3}
+                      />
+                      
+                      {/* Node text */}
+                      <text
+                        x={0}
+                        y={lines.length === 1 ? 5 : -(lines.length - 1) * 6}
+                        textAnchor="middle"
+                        className="fill-white font-semibold text-xs pointer-events-none select-none"
+                        style={{ fontSize: Math.max(8, node.radius / 6) }}
+                      >
+                        {lines.map((line, i) => (
+                          <tspan key={i} x={0} dy={i === 0 ? 0 : 12}>
+                            {line}
+                          </tspan>
+                        ))}
+                      </text>
+                      
+                      {/* Pulse animation for selected node */}
+                      {isSelected && (
+                        <circle
+                          cx={0}
+                          cy={0}
+                          r={node.radius + 10}
+                          fill="none"
+                          stroke={node.color}
+                          strokeWidth={2}
+                          opacity={0.6}
+                          className="animate-ping"
+                        />
+                      )}
+                    </g>
+                  );
+                })}
+              </g>
+
+              {/* Gradient definitions */}
+              <defs>
+                <radialGradient id="nodeGradient" cx="30%" cy="30%">
+                  <stop offset="0%" stopColor="rgba(255,255,255,0.6)" />
+                  <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+                </radialGradient>
+              </defs>
+            </svg>
+          </div>
+
+          {/* Legend */}
+          <div className="mt-6 flex justify-center gap-8">
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded-full bg-emerald-600"></div>
+              <span className="text-white text-sm">Source</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded-full bg-amber-500"></div>
+              <span className="text-white text-sm">Narrative</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded-full bg-blue-600"></div>
+              <span className="text-white text-sm">Findings</span>
+            </div>
+          </div>
+
+          {/* Instructions */}
+          <div className="mt-4 text-center text-gray-400 text-sm">
+            <p>Click and drag nodes to reposition • Click nodes to highlight connections • Hover for effects</p>
+          </div>
+
+          {/* Selected node info */}
+          {selectedNode && (
+            <div className="mt-4 p-4 bg-gray-700 rounded-lg border border-gray-600">
+              <h3 className="text-white font-semibold mb-2">Selected Node</h3>
+              <p className="text-gray-300">
+                {nodes.find(n => n.id === selectedNode)?.label}
+              </p>
+              <p className="text-gray-400 text-sm mt-1">
+                Category: {nodes.find(n => n.id === selectedNode)?.category}
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

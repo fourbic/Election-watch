@@ -69,6 +69,7 @@ const SignInComponent: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 max-w-6xl w-full bg-black rounded-3xl overflow-hidden shadow-2xl">
         
         {/* Left Side - Ballot Box Animation */}
+       
         <div className="p-10 lg:p-15 flex flex-col justify-between bg-black relative overflow-hidden">
           <div className="relative z-10">
             <div className="flex items-center gap-3 text-white text-2xl font-bold mb-10">
@@ -83,6 +84,7 @@ const SignInComponent: React.FC = () => {
               </div>
             </div>
           </div>
+          
           
        
           
