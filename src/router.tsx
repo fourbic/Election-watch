@@ -10,6 +10,7 @@ import ReportsPage from './pages/ReportsPage';
 import SettingsPage from './pages/SettingsPage';
 import { useAuth } from './context/AuthContext';
 import { FC, PropsWithChildren } from 'react';
+import SignUp from './pages/SignUp';
 
 // Protected route wrapper component
 const ProtectedRoute: FC<PropsWithChildren> = ({ children }) => {
@@ -27,6 +28,10 @@ const router = createBrowserRouter([
   {
     path: '/login',
     element: <LoginPage />,
+  },
+    {
+    path: '/sign-up',
+    element: <SignUp />,
   },
   {
     path: '/',

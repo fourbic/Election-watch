@@ -2,7 +2,8 @@
   "name": "dexter",
   "private": true,
   "version": "1.0.0",
-  "type": "module",  "scripts": {
+  "type": "module",
+  "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
     "lint": "eslint ./src --quiet",
@@ -16,10 +17,13 @@
     "@supabase/supabase-js": "^2.47.12",
     "@tailwindcss/forms": "^0.5.10",
     "@types/prop-types": "^15.7.14",
+    "lucide-react": "^0.516.0",
     "prop-types": "^15.8.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^7.6.0"
+    "react-router-dom": "^7.6.0",
+    "recharts": "^2.15.3",
+    "vis-network": "^9.1.12"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.0",

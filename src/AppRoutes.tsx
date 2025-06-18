@@ -12,6 +12,7 @@ import TimelinePage from './pages/TimelinePage';
 import AlertsPage from './pages/AlertsPage';
 import ReportsPage from './pages/ReportsPage';
 import SettingsPage from './pages/SettingsPage';
+import SignUp from './pages/SignUp';
 
 // Protected route component
 const ProtectedRoute: FC<PropsWithChildren> = ({ children }) => {
@@ -37,6 +38,7 @@ const AppRoutes: FC = () => {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+       <Route path="/sign-up" element={<SignUp />} />
       
       <Route path="/" element={
         <ProtectedRoute>

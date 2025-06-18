@@ -32,3 +32,5 @@ body {
 ::-webkit-scrollbar-corner {
   display: none;
 }
+.border-red{border:1px solid red;}
+.border-green{border:1px solid green;}

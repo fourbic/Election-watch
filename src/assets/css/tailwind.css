@@ -90,3 +90,15 @@
 .animate-pulse-blue {
   animation: pulse-blue 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
+@layer base { /* Or utilities, or just globally */
+  @keyframes fade-in-up {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
