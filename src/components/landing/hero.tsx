@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, X, Shield, Eye, Users, ArrowRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 
 const Hero = () => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-
+const navigate=useNavigate()
   useEffect(() => {
     const handleMouseMove = (e:any) => {
       setMousePosition({
@@ -63,7 +64,7 @@ const Hero = () => {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 animate-fade-in-up delay-500">
-              <button className="group px-8 py-4 bg-white hover:bg-white/50 text-black  font-semibold rounded-lg transform hover:scale-105 transition-all duration-200 flex items-center justify-center space-x-2">
+              <button onClick={()=>navigate("/sign-up")} className="group px-8 py-4 bg-white hover:bg-white/50 text-black  font-semibold rounded-lg transform hover:scale-105 transition-all duration-200 flex items-center justify-center space-x-2">
                 <span>Sign up</span>
                 <ArrowRight className="group-hover:translate-x-1 transition-transform" size={20} />
               </button>

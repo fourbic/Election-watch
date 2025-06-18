@@ -13,6 +13,8 @@ import AlertsPage from './pages/AlertsPage';
 import ReportsPage from './pages/ReportsPage';
 import SettingsPage from './pages/SettingsPage';
 import SignUp from './pages/SignUp';
+import SignUpComponent from './components/signUp';
+import SignInComponent from './components/signIn/signIn';
 
 // Protected route component
 const ProtectedRoute: FC<PropsWithChildren> = ({ children }) => {
@@ -37,7 +39,7 @@ const ProtectedRoute: FC<PropsWithChildren> = ({ children }) => {
 const AppRoutes: FC = () => {
   return (
     <Routes>
-      <Route path="/login" element={<LoginPage />} />
+      <Route path="/login" element={<SignInComponent />} />
        <Route path="/sign-up" element={<SignUp />} />
       
       <Route path="/" element={

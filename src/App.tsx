@@ -13,6 +13,7 @@ import AlertsPage from './pages/AlertsPage';
 import ReportsPage from './pages/ReportsPage';
 import SettingsPage from './pages/SettingsPage';
 import SignUp from './pages/SignUp';
+import SignInComponent from './components/signIn/signIn';
 
 /**
  * Main App component for Dexter platform
@@ -40,7 +41,7 @@ function App(): JSX.Element {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
-      <Route path="/login" element={<LoginPage />} />
+      <Route path="/login" element={<SignInComponent />} />
        <Route path="/sign-up" element={<SignUp />} />
       
       {/* Protected routes */}
