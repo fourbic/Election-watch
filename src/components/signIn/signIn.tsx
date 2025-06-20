@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useForm } from '@mantine/form';
 import { Link } from 'react-router-dom';
+import { injectCss } from '../../utils/helpers';
 
 interface SignInFormData {
   email: string;
@@ -10,7 +11,9 @@ interface SignInFormData {
 const SignInComponent: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-
+React.useEffect(()=>{
+  injectCss("sign-in" ,css)
+},[])
   const form = useForm<SignInFormData>({
     initialValues: {
       email: '',
@@ -228,7 +231,13 @@ const SignInComponent: React.FC = () => {
         </div>
       </div>
 
-      <style jsx>{`
+    
+    </div>
+  );
+};
+
+export default SignInComponent;
+const css=`
         .signin-wrapper {
           animation: slideUp 0.8s ease-out;
         }
@@ -381,9 +390,4 @@ const SignInComponent: React.FC = () => {
             height: 160px;
           }
         }
-      `}</style>
-    </div>
-  );
-};
-
-export default SignInComponent;
+      `
